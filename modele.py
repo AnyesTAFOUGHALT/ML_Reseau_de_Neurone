@@ -36,6 +36,7 @@ class Module_lineare(Module):
             'weights': np.random.randn(input_size, output_size),
             'biais': np.zeros(output_size)
         }
+        self._gradient = dict()
 
         self.zero_grad()
 
@@ -57,9 +58,9 @@ class Module_lineare(Module):
         assert input.shape[1] == self.input_size
         assert delta.shape[1] == self.output_size
         assert input.shape[0] == delta.shape[0]
-        self.gradient['weights'] += input.T @ delta / len(input)
+        self._gradient['weights'] += input.T @ delta / len(input)
         if self.biais :
-            self.gradient['biais'] += np.mean(delta, axis=0)
+            self._gradient['biais'] += np.mean(delta, axis=0)
 
     def backward_delta(self, input, delta):
         # Calcul du gradient par rapport aux entrées
@@ -70,7 +71,20 @@ class Module_lineare(Module):
 
     def update_parameters(self, gradient_step):
         # Mise à jour des paramètres avec un certain pas d'apprentissage
-        self._parameters['weights'] -= gradient_step * self.gradient['weights']
+        self._parameters['weights'] -= gradient_step * self._gradient['weights']
         if self.biais :
-            self._parameters['biais'] -= gradient_step * self.gradient['biais']
+            self._parameters['biais'] -= gradient_step * self._gradient['biais']
+
+    def set_parameters(self, parameters):
+        assert parameters['weights'].shape == self._parameters['weights'].shape
+        assert parameters['biais'].shape == self._parameters['biais'].shape
+        self._parameters['weights'] = parameters['weights'].copy()
+        self._parameters['biais'] = parameters['biais'].copy()
+
+    
+    def get_parameters(self):
+        parameters = dict()
+        parameters['weights'] = self._parameters['weights'].copy()
+        parameters['biais'] = self._parameters['biais'].copy()
+        return parameters
 
