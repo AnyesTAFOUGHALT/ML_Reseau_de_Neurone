@@ -20,3 +20,5 @@ class MSELoss(Loss):
     def backward(self, y, yhat):
         assert y.shape == yhat.shape
         return -2 * (y - yhat) 
+    
+

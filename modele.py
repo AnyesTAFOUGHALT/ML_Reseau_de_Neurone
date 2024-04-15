@@ -91,3 +91,22 @@ class Module_lineare(Module):
         parameters['biais'] = self._parameters['biais'].copy()
         return parameters
 
+
+class Softmax(Module):
+    def __init__(self ):
+        super().__init__()
+
+    def zero_grad(self):
+        ## Annule gradient
+        pass
+
+    def forward(self, x):
+        self._input = x
+        exps = np.exp(x) 
+        return exps / np.sum(exps, axis=1, keepdims=True)
+
+    def backward_delta(self, input, delta):
+        ## Calcul la derivee de l'erreur
+        exps = np.exp(input)
+        q = exps / np.sum(exps, axis=1, keepdims=True)
+        return delta * q * (1 - q)
