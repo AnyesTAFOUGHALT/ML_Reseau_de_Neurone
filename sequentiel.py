@@ -4,7 +4,7 @@ import numpy as np
 import math
 import copy
 
-class Sequential:
+class Sequentiel:
     def __init__(self , modules):
         for module in modules :
             assert isinstance(module, Module)
@@ -40,7 +40,7 @@ class Sequential:
 
 class Optim:
     def __init__(self , net, loss, eps) :
-        assert isinstance(net, Sequential)
+        assert isinstance(net, Sequentiel)
         assert isinstance(loss, Loss)
         self._net = net
         self._loss = loss
