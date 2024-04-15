@@ -67,14 +67,20 @@ class Optim:
         np.random.shuffle(index)
 
         loss_min = math.inf
+        loss_list = []
         best_network = None
 
-        for epoch in epochs :
+        for _ in epochs :
             for i in range(0 , N , batch_size) :
                 batch_X = data[index[i:i+batch_size]]
                 batch_Y = labels[index[i:i+batch_size]]
                 y_pred , loss_value = self.step(batch_X , batch_Y)
+                loss_list.append(np.mean(loss_value))
                 if np.mean(loss_value) < loss_min :
                     loss_min = np.mean(loss_value)
                     best_network = copy.deepcopy(self._net)
         self._net = best_network
+    
+    # def accuracy(self , data , labels) :
+    #     pred = np.where(self._net.forward(data) >= 0.5,1, 0)
+    #     return np.mean(np.where(labels == pred, 1 , 0 ))
