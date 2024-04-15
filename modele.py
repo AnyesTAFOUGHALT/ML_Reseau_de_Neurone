@@ -4,6 +4,7 @@ class Module(object):
     def __init__(self):
         self._parameters = None
         self._gradient = None
+        self._input = None
 
     def zero_grad(self):
         ## Annule gradient
@@ -34,7 +35,8 @@ class Module_lineare(Module):
         self.biais = biais
         self._parameters = {
             'weights': np.random.randn(input_size, output_size),
-            'biais': np.zeros(output_size)
+            'biais': np.random.randn(output_size),
+
         }
         self._gradient = dict()
 
@@ -49,6 +51,7 @@ class Module_lineare(Module):
         ## Calcule la passe forward
         # X : (n , d_input) , W : (d_input , d_output)
         assert X.shape[1] == self.input_size
+        self._input = X
         if self.biais :
             return X @ self._parameters['weights'] + self._parameters['biais']
         return X @ self._parameters['weights'] 
@@ -58,9 +61,9 @@ class Module_lineare(Module):
         assert input.shape[1] == self.input_size
         assert delta.shape[1] == self.output_size
         assert input.shape[0] == delta.shape[0]
-        self._gradient['weights'] += input.T @ delta / len(input)
+        self._gradient['weights'] += input.T @ delta 
         if self.biais :
-            self._gradient['biais'] += np.mean(delta, axis=0)
+            self._gradient['biais'] += np.sum(delta, axis=0)
 
     def backward_delta(self, input, delta):
         # Calcul du gradient par rapport aux entrées
