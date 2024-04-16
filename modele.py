@@ -27,18 +27,20 @@ class Module(object):
 
 
 class Module_lineare(Module):
-    def __init__(self, input_size, output_size , biais = False):
+
+    def __init__(self, input_size, output_size , biais = True):
         super().__init__()
         self.input_size = input_size
         self.output_size = output_size
         self.biais = biais
         self._parameters = {
-            'weights': np.random.randn(input_size, output_size),
-            'biais': np.zeros(output_size)
+            'weights':np.random.random((input_size, output_size))-0.5,
+            'biais': np.random.randn(output_size)-0.5,
         }
         self._gradient = dict()
-
         self.zero_grad()
+
+
 
     def zero_grad(self):
         ## Annule gradient
@@ -58,9 +60,9 @@ class Module_lineare(Module):
         assert input.shape[1] == self.input_size
         assert delta.shape[1] == self.output_size
         assert input.shape[0] == delta.shape[0]
-        self._gradient['weights'] += input.T @ delta / len(input)
+        self._gradient['weights'] += input.T @ delta
         if self.biais :
-            self._gradient['biais'] += np.mean(delta, axis=0)
+            self._gradient['biais'] += np.sum(delta, axis=0)
 
     def backward_delta(self, input, delta):
         # Calcul du gradient par rapport aux entrées
@@ -87,4 +89,3 @@ class Module_lineare(Module):
         parameters['weights'] = self._parameters['weights'].copy()
         parameters['biais'] = self._parameters['biais'].copy()
         return parameters
-
