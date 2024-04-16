@@ -8,10 +8,12 @@ class TanH(modele.Module):
         super().__init__()
         self._parameters = None
         self._gradient = None
+        self._input = None
 
 
     def forward(self, X):
         ## Calcule la passe forward
+        self._input = X.copy()
         return np.tanh(X) 
 
 
@@ -30,6 +32,7 @@ class Sigmoide(modele.Module):
 
     def forward(self, X):
         ## Calcule la passe forward
+        self._input = X.copy()
         return 1/(1+np.exp(-X))
 
     def backward_delta(self, input, delta):

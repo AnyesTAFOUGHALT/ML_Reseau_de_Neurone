@@ -4,6 +4,7 @@ class Module(object):
     def __init__(self):
         self._parameters = None
         self._gradient = None
+        self._input = None
 
     def zero_grad(self):
         ## Annule gradient
@@ -51,6 +52,7 @@ class Module_lineare(Module):
         ## Calcule la passe forward
         # X : (n , d_input) , W : (d_input , d_output)
         assert X.shape[1] == self.input_size
+        self._input = X.copy()
         if self.biais :
             return X @ self._parameters['weights'] + self._parameters['biais']
         return X @ self._parameters['weights'] 
