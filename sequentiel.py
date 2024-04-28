@@ -6,8 +6,8 @@ import copy
 
 class Sequentiel:
     def __init__(self , modules):
-        for module in modules :
-            assert isinstance(module, Module)
+        # for module in modules :
+        #     assert isinstance(module, Module)
         self._modules = modules
         self.zero_grad()
 
@@ -35,13 +35,14 @@ class Sequentiel:
     def update_parameters(self, gradient_step):
         # Mise à jour des paramètres avec un certain pas d'apprentissage
         for module in self._modules :
-            module.update_parameters(gradient_step)
-            module.zero_grad()
+            if module._gradient != None :
+                module.update_parameters(gradient_step)
+                module.zero_grad()
 
 class Optim:
     def __init__(self , net, loss, eps) :
-        assert isinstance(net, Sequentiel)
-        assert isinstance(loss, Loss)
+        # assert isinstance(net, Sequentiel)
+        # assert isinstance(loss, Loss)
         self._net = net
         self._loss = loss
         self._eps = eps
@@ -70,7 +71,7 @@ class Optim:
         loss_list = []
         best_network = None
 
-        for _ in epochs :
+        for _ in range(epochs) :
             for i in range(0 , N , batch_size) :
                 batch_X = data[index[i:i+batch_size]]
                 batch_Y = labels[index[i:i+batch_size]]

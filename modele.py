@@ -1,4 +1,6 @@
 import numpy as np
+import utils as ut
+
 
 class Module(object):
     def __init__(self):
@@ -91,22 +93,57 @@ class Module_lineare(Module):
         parameters['biais'] = self._parameters['biais'].copy()
         return parameters
 
+class TanH(Module):
+
+    def __init__(self):
+        super().__init__()
+        self._parameters = None
+        self._gradient = None
+
+
+    def forward(self, X):
+        ## Calcule la passe forward
+        self._input = X
+        return np.tanh(X) 
+
+
+    def backward_delta(self, input, delta):
+        ## Calcul la derivee de l'erreur
+        # Calcul du gradient par rapport aux entrées
+        return (1-np.tanh(input)**2) * delta 
+    
+
+class Sigmoide(Module):
+
+    def __init__(self):
+        self._parameters = None
+        self._gradient = None
+
+
+    def forward(self, X):
+        ## Calcule la passe forward
+        self._input = X
+        return 1/(1+np.exp(-X))
+
+    def backward_delta(self, input, delta):
+        ## Calcul la derivee de l'erreur
+        # Calcul du gradient par rapport aux entrées
+        return delta * ut.sigmoid_derivative(input)
 
 class Softmax(Module):
     def __init__(self ):
         super().__init__()
 
-    def zero_grad(self):
-        ## Annule gradient
-        pass
-
     def forward(self, x):
+        ## Calcule la passe forward
         self._input = x
+        eps = 1e-4
         exps = np.exp(x) 
-        return exps / np.sum(exps, axis=1, keepdims=True)
+        return exps / (np.sum(exps, axis=1, keepdims=True) + eps)
 
     def backward_delta(self, input, delta):
         ## Calcul la derivee de l'erreur
+        eps = 1e-4
         exps = np.exp(input)
-        q = exps / np.sum(exps, axis=1, keepdims=True)
+        q = exps / (np.sum(exps, axis=1, keepdims=True) + eps )
         return delta * q * (1 - q)
