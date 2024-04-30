@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
+from sklearn.metrics import adjusted_rand_score, adjusted_mutual_info_score, completeness_score, homogeneity_score, v_measure_score
 
 
 def plot_data(data,labels=None):
@@ -110,3 +111,20 @@ def get_usps(l,datax,datay):
 
 def show_usps(data):
     plt.imshow(data.reshape((16,16)),interpolation="nearest",cmap="gray")
+
+
+#----------------Calcul performance---------------------#
+def prefomance_en_clustering(y_pred,y_true):
+    # Calcul des différentes métriques
+    ari = adjusted_rand_score(y_true, y_pred)
+    ami = adjusted_mutual_info_score(y_true, y_pred)
+    completeness = completeness_score(y_true, y_pred)
+    homogeneity = homogeneity_score(y_true, y_pred)
+    v_measure = v_measure_score(y_true, y_pred)
+
+    # Affichage des résultats
+    print("Adjusted Rand Index:", ari)
+    print("Adjusted Mutual Information:", ami)
+    print("Completeness Score:", completeness)
+    print("Homogeneity Score:", homogeneity)
+    print("V-measure Score:", v_measure)
