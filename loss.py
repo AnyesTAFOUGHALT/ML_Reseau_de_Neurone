@@ -25,7 +25,8 @@ class BCELoss(Loss):
     def forward(self, y, yhat):
         #params passé en entrée sont de la bonne taille
         assert y.shape == yhat.shape
-        return - np.sum(y*np.log(yhat) + (1-y)*np.log(1-yhat) , axis=1 , keepdims=True)
+        eps = 1e-4
+        return - (y*np.log(yhat +eps) + (1-y)*np.log(1-yhat + eps) )
     
     def backward(self, y, yhat):
         #params passé en entrée sont de la bonne taille

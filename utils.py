@@ -99,8 +99,12 @@ def get_usps(l,datax,datay):
     tmpx,tmpy = np.vstack(tmp[0]),np.hstack(tmp[1])
     return tmpx,tmpy
 
+
 def show_usps(data):
     plt.imshow(data.reshape((16,16)),interpolation="nearest",cmap="gray")
+
+def show_usps_mnist(data):
+    plt.imshow(data.reshape((28,28)),interpolation="nearest",cmap="gray")
 
 
 def one_hot(labels) :
@@ -115,3 +119,7 @@ def sigmoid(x):
 def sigmoid_derivative(x):
     sig = sigmoid(x)
     return sig * (1 - sig)
+
+def add_noise(image, noise_factor=0.2):
+    return image + noise_factor * np.random.normal(loc=0.0, scale=1.0, size=image.shape)
+    

@@ -52,6 +52,7 @@ class Module_lineare(Module):
     def forward(self, X):
         ## Calcule la passe forward
         # X : (n , d_input) , W : (d_input , d_output)
+        
         assert X.shape[1] == self.input_size
         self._input = X
         if self.biais :

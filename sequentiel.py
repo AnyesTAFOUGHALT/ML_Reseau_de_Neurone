@@ -61,27 +61,44 @@ class Optim:
 
         return y_pred , loss_value
     
-    def SGD(self , data , labels , batch_size , epochs ) :
+    def SGD(self , data , labels , batch_size , epochs , _break=100  ) :
         assert len(data) == len(labels)
         N = len(data)
         index = np.arange(N)
         np.random.shuffle(index)
 
         loss_min = math.inf
-        loss_list = []
-        best_network = None
+                
+        best_network = self._net
+        stop = 0
 
-        for _ in range(epochs) :
+        mean_losses = []
+
+        for j in range(epochs) :
+            print(j)
+            loss_list = []
             for i in range(0 , N , batch_size) :
                 batch_X = data[index[i:i+batch_size]]
                 batch_Y = labels[index[i:i+batch_size]]
-                y_pred , loss_value = self.step(batch_X , batch_Y)
+                _ , loss_value = self.step(batch_X , batch_Y)
                 loss_list.append(np.mean(loss_value))
-                if np.mean(loss_value) < loss_min :
-                    loss_min = np.mean(loss_value)
-                    best_network = copy.deepcopy(self._net)
+            stop +=1
+            if np.mean(loss_value) < loss_min :
+                stop = 0
+                loss_min = np.mean(loss_value)
+                best_network = copy.deepcopy(self._net)
+            print(np.mean(loss_value))
+            mean_losses.append(np.mean(loss_value))
+            if stop == _break :
+                print("Le modéle a convergé avant de parcourir toutes les epochs")
+                break
+
         self._net = best_network
+
+        return mean_losses
     
     # def accuracy(self , data , labels) :
     #     pred = np.where(self._net.forward(data) >= 0.5,1, 0)
     #     return np.mean(np.where(labels == pred, 1 , 0 ))
+
+    
