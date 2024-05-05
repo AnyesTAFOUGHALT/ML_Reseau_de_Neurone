@@ -69,7 +69,7 @@ class Optim:
         np.random.shuffle(index)
 
         loss_min = math.inf
-        best_network = None
+        best_network = self._net # modification
         loses = []
         for _ in range(epochs) :
             loss_list = []
@@ -78,11 +78,13 @@ class Optim:
                 batch_Y = labels[index[i:i+batch_size]]
                 y_pred , loss_value = self.step(batch_X , batch_Y)
                 loss_list.append(np.mean(loss_value))
-                if np.mean(loss_value) < loss_min :
-                    loss_min = np.mean(loss_value)
-                    best_network = copy.deepcopy(self._net)
+            mean_loss = np.mean(loss_list)
+            if mean_loss < loss_min :
+                loss_min = mean_loss
+                best_network = copy.deepcopy(self._net)
 
-            loses.append(np.mean(loss_list))
+            loses.append(mean_loss)
+            
         self._net = best_network
 
         return loses

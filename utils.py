@@ -128,3 +128,17 @@ def prefomance_en_clustering(y_pred,y_true):
     print("Completeness Score:", completeness)
     print("Homogeneity Score:", homogeneity)
     print("V-measure Score:", v_measure)
+
+
+#---------------Pour le multi class 
+def one_hot(labels) :
+    onehot = np.zeros((labels.size, 10))
+    for i, label in enumerate(labels):
+        onehot[i, label] = 1
+    return onehot
+
+#--------------ANYES RACHA QUI L A COPIE 
+
+def add_noise(image, noise_factor=0.2):
+    return image + noise_factor * np.random.normal(loc=0.0, scale=1.0, size=image.shape)
+    

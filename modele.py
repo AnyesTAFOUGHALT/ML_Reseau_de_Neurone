@@ -91,3 +91,23 @@ class Module_lineare(Module):
         parameters['weights'] = self._parameters['weights'].copy()
         parameters['biais'] = self._parameters['biais'].copy()
         return parameters
+    
+
+#-------------------AJOUT DE LINEAIRE
+class Softmax(Module):
+    def __init__(self ):
+        super().__init__()
+
+    def forward(self, x):
+        ## Calcule la passe forward
+        self._input = x
+        eps = 1e-4
+        exps = np.exp(x) 
+        return exps / (np.sum(exps, axis=1, keepdims=True) + eps)
+
+    def backward_delta(self, input, delta):
+        ## Calcul la derivee de l'erreur
+        eps = 1e-4
+        exps = np.exp(input)
+        q = exps / (np.sum(exps, axis=1, keepdims=True) + eps )
+        return delta * q * (1 - q)
