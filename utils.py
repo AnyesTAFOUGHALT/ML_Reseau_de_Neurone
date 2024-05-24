@@ -112,6 +112,9 @@ def get_usps(l,datax,datay):
 def show_usps(data):
     plt.imshow(data.reshape((16,16)),interpolation="nearest",cmap="gray")
 
+def show_usps_mnist(data):
+    plt.imshow(data.reshape((28,28)),interpolation="nearest",cmap="gray")
+
 
 #----------------Calcul performance---------------------#
 def prefomance_en_clustering(y_pred,y_true):

@@ -6,13 +6,13 @@ import copy
 
 class Sequentiel:
     def __init__(self , modules):
-        for module in modules :
-            assert isinstance(module, Module)
+        # for module in modules :
+        #     assert isinstance(module, Module)
         self._modules = modules
         self.zero_grad()
 
     def add_module(self, module):
-        assert isinstance(module, Module)
+        # assert isinstance(module, Module)
         self._modules.append(module)
 
     def forward(self, X):
@@ -41,8 +41,8 @@ class Sequentiel:
 
 class Optim:
     def __init__(self , net, loss, eps) :
-        assert isinstance(loss, Loss)
-        assert isinstance(net, Sequentiel)
+        # assert isinstance(loss, Loss)
+        # assert isinstance(net, Sequentiel)
 
         self._net = net
         self._loss = loss
@@ -71,7 +71,8 @@ class Optim:
         loss_min = math.inf
         best_network = self._net # modification
         loses = []
-        for _ in range(epochs) :
+        for i in range(epochs) :
+            print("epoch ", i)
             loss_list = []
             for i in range(0 , N , batch_size) :
                 batch_X = data[index[i:i+batch_size]]
