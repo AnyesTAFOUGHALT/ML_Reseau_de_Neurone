@@ -154,7 +154,7 @@ class Softmax(Module):
         q = exps / (np.sum(exps, axis=1, keepdims=True) + eps )
         return delta * q * (1 - q)
     
-#-------------------------- Convolution -----------------------#
+#-------------------------- ReLu -----------------------#
     
 class ReLu(Module):
     def __init__(self, threshold=0 ):
@@ -170,49 +170,71 @@ class ReLu(Module):
         ## Calcul la derivee de l'erreur
         return np.where(input>self._threshold,1.,0.) * delta 
 
+    def update_parameters(self, gradient_step=1e-3):     
+        pass
+
+    def backward_update_gradient(self, input, delta):
+        pass
+
 #-------------------------- Conv1D -----------------------#   
 class Conv1D(Module):
-    def __init__(self, k_size, chan_in, chan_out, stride=1):
+    def __init__(self,k_size,chan_in,chan_out,stride):
         """
         k_size : kernel size
         chan_in : number of input channels
         chan_out : number of output channels
         stride : stride value
         """
-        super().__init__()
         self.k_size = k_size
         self.chan_in = chan_in
         self.chan_out = chan_out
         self.stride = stride
-        self._parameters = np.random.randn(k_size, chan_in, chan_out)
-        self._gradient = np.zeros((k_size, chan_in, chan_out))
 
-    def forward(self, data):
+        np.random.seed(0)
+        self._parameters =2*(np.random.random((k_size,chan_in,chan_out))-0.5) * 1e-1 
+        self._gradient = np.zeros((k_size,chan_in,chan_out))
+
+    def forward(self,X):
         """
             X est de taille  (batch,length,chan_in)
             output est de taille (batch, (length-k_size)/stride +1,chan_out)
         """
-        batch_size, input_length, _ = data.shape
-        output_length = (input_length - self.k_size) // self.stride + 1
-        output = np.zeros((batch_size, output_length, self.chan_out))
-        for i in range(output_length):
-            output[:, i, :] = np.sum(data[:, i:i+self.k_size, :, np.newaxis] * self._parameters, axis=(1, 2))
-        return output
+        self._input = X.copy()
+        batch_size,input_length,c = X.shape
 
-    def zero_grad(self):
-        self._gradient = np.zeros_like(self._parameters)
+        result = np.zeros((batch_size, (input_length-self.k_size)//self.stride + 1, self.chan_out))
+        for n in range(batch_size):
+            A = X[n]
+            for f in range(self.chan_out):
+                weights = self._parameters[:,:,f] 
+
+                for i in range(0,result.shape[1]):
+                    j = i*self.stride
+                    B = A[j:j+self.k_size] 
+                    
+                    result[n,i,f] = (B * weights).sum()
+
+        return result
 
     def backward_update_gradient(self, input, delta):
         """
         input de taille (batch, length, chan_in)
         delta de taille (batch, output_length, chan_out)
         """
-        batch_size, input_length, _ = input.shape
-        output_length, _ = delta.shape[1:]
-        for b in range(batch_size):
-            for i in range(output_length):
-                input_segment = input[b, i:i+self.k_size, :]
-                self._gradient += np.outer(input_segment.flatten(), delta[b, i, :])
+        assert input.shape[2] == self.chan_in
+        assert delta.shape[2] == self.chan_out
+        assert delta.shape[1] == (input.shape[1]-self.k_size)//self.stride + 1
+        assert delta.shape[0] == input.shape[0]
+        batch_size, length_out, chan_out = delta.shape
+        for n in range(batch_size):
+            A = input[n] 
+            for z in range(chan_out):
+                for i in range(length_out):
+                    Xs = A[i:i+self.k_size] 
+                    delta0 = delta[n,i,z]
+                    self._gradient[:,:,z] += Xs*delta0
+    def update_parameters(self, gradient_step=1e-5):
+        pass
 
     def backward_delta(self, input, delta):
         """
@@ -220,42 +242,62 @@ class Conv1D(Module):
         delta de taille (batch, output_length, chan_out)
         Returns:
         - delta de taille (batch, length, chan_in)
-        """
-        batch_size, input_length, _ = input.shape
-        output_length, _ = delta.shape[1:]
-        out = np.zeros_like(input)
-        for b in range(batch_size):
-            for i in range(output_length):
-                out[b, i:i+self.k_size, :] += np.matmul(delta[b, i, :], self._parameters.reshape(-1, self.chan_out).T).reshape(self.k_size, self.chan_in)
-        return out
+        """   
 
-    def update_parameters(self, gradient_step):
-        self._parameters -= gradient_step * self._gradient
+        b, length_out, chan_out = delta.shape
+        
+        result = np.zeros(input.shape)
+        result = np.array(result, dtype=np.float64)
 
+        for n in range(b):
+            A = input[n] 
+            for z in range(chan_out):
+                weights = self._parameters[:,:,z] 
+                for i in range(length_out):
+                    delta0 = delta[n,i,z]
+                    result[n,i:i+self.k_size,:] += weights*delta0
+        return result
+    
+    def zero_grad(self):
+        self._gradient = np.zeros(self._gradient.shape)
 
 #-------------------------- MaxPool1D -----------------------#  
 class MaxPool1D(Module):
-    def __init__(self, k_size, stride):
+    def __init__(self,k_size,stride):
         """
         k_size : kernel size
         stride : stride value
         """
-        super().__init__()
         self.k_size = k_size
         self.stride = stride
-
-    def forward(self, data):
+        self.max_idx = None
+    
+    def forward(self,X):
         """
         data: input data of shape (batch, length, chan_in)
         Returns:
         - output of shape (batch, (length - k_size) // stride + 1, chan_in)
         """
-        batch_size, input_length, chan_in = data.shape
-        output_length = (input_length - self.k_size) // self.stride + 1
-        output = np.zeros((batch_size, output_length, chan_in))
-        for i in range(output_length):
-            output[:, i, :] = np.max(data[:, i:i+self.k_size, :], axis=1)
-        return output
+        self._input = X.copy()
+        batch_size,input_length,chan_in = X.shape
+
+        result = np.zeros((batch_size, (input_length-self.k_size)//self.stride + 1, chan_in))
+        self.max_idx = np.zeros(result.shape)
+
+        for i in range(0, result.shape[1]):
+            
+            self.max_idx[:,i] = np.argmax(X[:, (i * self.stride): (i * self.stride + self.k_size)],
+                                                 axis=1) + i * self.stride
+            result[:,i,:] = np.max(X[:,(i*self.stride) : (i*self.stride + self.k_size)], axis=1)
+        self.max_idx = self.max_idx.astype(int)
+        return result
+
+    def update_parameters(self, gradient_step=1e-5):      
+        pass
+        
+
+    def backward_update_gradient(self, input, delta):      
+        pass
 
     def backward_delta(self, input, delta):
         """
@@ -264,42 +306,56 @@ class MaxPool1D(Module):
         Returns:
         - delta of shape (batch, length, chan_in)
         """
-        batch_size, input_length, chan_in = input.shape
-        output_length = delta.shape[1]
-        out = np.zeros_like(input)
-        for b in range(batch_size):
-            for i in range(output_length):
-                indices = np.argmax(input[b, i*self.stride:i*self.stride+self.k_size, :], axis=0)
-                out[b, i*self.stride:i*self.stride+self.k_size, :] = delta[b, i, :] * (indices[:, np.newaxis] == np.arange(chan_in))
-        return out
-
+        batch_size,input_length,chan_in = input.shape        
+        result = np.zeros_like(input)
+        
+        for n in range(batch_size):
+            A = input[n]
+            ind = self.max_idx[n]
+            for i in range(ind.shape[0]):
+                for j in range(ind.shape[1]):
+                    result[n,ind[i,j],j] = delta[n,i,j]
+        
+        return result
 
 #-------------------------- Flatten -----------------------#  
+    
 class Flatten(Module):
+    def __init__(self):
+        pass
+    
+    def forward(self,X):
+        '''
+        params:
+        -------
+        X : dim (batch,length,chan_in)
 
-    def __init__(self ):
-        super().__init__()
-
-    def forward(self, data):
-        """
-        data: input data of shape (batch, length, chan_in)
-        Returns:
-        - flattened output of shape (batch, length * chan_in)
-        """
-        batch_size, length, chan_in = data.shape
-        return data.reshape(batch_size, -1)
-
+        return:
+        -------
+        dim (batch,length*chan_in)
+        '''
+        self._input = X.copy()
+        return X.reshape((len(X),-1))
+        
     def backward_delta(self, input, delta):
-        """
-        input: input data of shape (batch, length, chan_in)
-        delta: delta from the next layer of shape (batch, length * chan_in)
-        Returns:
-        - delta of shape (batch, length, chan_in)
-        """
+        ## Calcul la derivee de l'erreur
+        '''
+        param:
+        ------
+        input : resPool, dim (batch,length,chan_in)
+        delta : delta of lin, dim (batch,length*chan_out)
+        
+        return:
+        dim (batch,length,chan_in)
+        '''
         return delta.reshape(input.shape)
 
+    def backward_update_gradient(self, input, delta):
+        ## Met a jour la valeur du gradient
+        pass
 
-
-
-
-
+    def update_parameters(self, gradient_step=1e-5):
+        '''
+        no parameter
+        '''        
+        pass    
